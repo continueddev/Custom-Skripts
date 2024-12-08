@@ -1,0 +1,75 @@
+options:
+    word-blocking: true # Set to false to turn off bad word blocking in chat
+    default-blocking: true # Set to false to stop blocking the default list of words
+    cancel-message: true # Set to false if you want messages with bad words to go through without being deleted
+    prefix: <##4cd5ed>&lCHAT <##424242>→&7
+    default-words: "nigger, fuck, bitch, slut, dick"
+
+# DO NOT CHANGE ANYTHING DOWN BELOW IF YOU ARE NOT EXPERIENCED WITH SKRIPT!
+
+# Autocomplete for /filter command
+on tab complete of "/filter":
+    set tab completions for position 1 to "add", "remove" and "list"
+    if tab arg-1 = "remove":
+        set tab completions for position 2 to {blockedwords::*}
+
+# Set default blocked words on player join
+on join:
+    if {blockedwords::*} is not set:
+        if {@default-blocking} is true:
+            add {@default-words} to {blockedwords::*}
+        else:
+            stop
+
+on chat:
+    set {_msg} to message
+    loop {blockedwords::*}:
+        if {_msg} contains "%loop-value%":
+            if {@word-blocking} is true:
+                if {@cancel-message} is true:
+                    cancel event
+                    send "{@prefix} &7That word is not allowed! <##ff0004>D:<"
+                    play sound "entity.villager.no"
+                else:
+                    send "{@prefix} &7That word is not allowed! <##ff0004>D:<"
+                    play sound "entity.villager.no"
+
+
+
+command filter [<text>] [<text>]:
+    permission: wordblock.sk
+    permission message: &cYou don't have permission for this command!
+    aliases: bw
+    usage: &cIncorrect usage! &7Correct format: &a/blockword <word>
+    trigger:
+        if arg-1 is not set:
+            send "{@prefix} &a&lLesaDev's Anti Swear Commands:"
+            send "&b- /filter add &e<word> : Add a word to the filter"
+            send "&b- /filter remove &e<word> : Remove a word from the filter"
+            send "&b- /filter list &e: View all blocked words"
+        else:
+            if arg-1 is "add":
+                if {blockedwords::*} doesn't contain arg-2:
+                    add arg-2 to {blockedwords::*}
+                    send "{@prefix} ""&a%arg-2%&7""is now added to your blocked words list"
+                    play sound "block.note_block.pling" at pitch 1.5 to player
+                else:
+                    send "{@prefix} That word is already blocked!"
+                    play sound "block.note_block.pling" at pitch 0.5 to player
+            else if arg-1 is "remove":
+                if {blockedwords::*} contains arg-2:
+                    remove arg-2 from {blockedwords::*}
+                    send "{@prefix}""&c%arg-2%&7""has been removed from your blocked words list"
+                    play sound "block.note_block.pling" at pitch 1.5 to player
+                else:
+                    send "{@prefix} ""&c%arg-2%&7"" is not currently blocked."
+                    play sound "block.note_block.pling" at pitch 0.5 to player
+            else if arg-1 is "list":
+                if size of {blockedwords::*} is 0:
+                    send "{@prefix} &7There are no blocked words."
+                else:
+                    send "{@prefix} &7Here’s a list of blocked words: &a%{blockedwords::*}%"
+
+        
+
+# That's it!

@@ -1,0 +1,6 @@
+command /clearchat:
+  permission: sk.clearchat
+  trigger:
+    loop 1000 times:
+      broadcast " "
+    broadcast "<##e1ff00>&lMODERATION &8→ &fChat has been cleared by <##e1ff00>%player%!"

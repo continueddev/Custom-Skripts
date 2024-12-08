@@ -1,0 +1,51 @@
+on load:
+    questsCreate(stone, "mine stone", 5, 1, diamond)
+    questsCreate(dirt, "mine dirt", 32, 2, 64 emeralds)
+
+command /quests:
+    trigger:
+        quests(player)
+
+command /questsstop:
+    trigger:
+        delete {quest::active::%player's uuid%}
+        delete {quest::mine::total::%player's uuid%}
+        send "&cDeleted the quest!"
+
+on inventory click:
+    if name of player's current inventory contains "&7Quests":
+        cancel event
+        if clicked inventory != player's inventory:
+            if event-slot = paper:
+                if {quest::active::%player's uuid%} is set:
+                    send "&cYou have a quest started! Type /questsstop to stop the quest!"
+                    stop
+                set {quest::active::%player's uuid%} to index of event-slot + 1
+                set {quest::mine::total::%player's uuid%} to {quests::total::%index of event-slot + 1%}
+                send "You started the quest: %{quests::list::%index of event-slot + 1%}%"
+                while {quest::active::%player's uuid%} is set:
+                    send action bar "%{quests::list::%index of event-slot + 1%}%: %{quest::mine::total::%player's uuid%}%" to player
+                    wait 1 seconds
+
+on break:
+    if {quest::active::%player's uuid%} is set:
+        if event-block = {quests::block::%{quest::active::%player's uuid%}%}:
+            remove 1 from {quest::mine::total::%player's uuid%}
+            if {quest::mine::total::%player's uuid%} <= 0:
+                give player {quests::prize::%{quest::active::%player's uuid%}%}
+                broadcast {quests::prize::%{quest::active::%player's uuid%}%}
+                delete {quest::active::%player's uuid%}
+                delete {quest::mine::total::%player's uuid%}
+
+function quests(P: player):
+    open chest inventory with 6 rows named "&7Quests" to {_P}
+    set {_var} to -1
+    loop {quests::list::*}:
+        add 1 to {_var}
+        set slot {_var} of {_P}'s current inventory to paper named loop-value
+
+function questsCreate(block: itemtype, quest: text, total: int, id: int, prize: itemtype):
+    set {quests::block::%{_id}%} to {_block}
+    set {quests::list::%{_id}%} to {_quest}
+    set {quests::prize::%{_id}%} to {_prize}
+    set {quests::total::%{_id}%} to {_total}

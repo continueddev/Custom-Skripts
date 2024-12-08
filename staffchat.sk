@@ -1,0 +1,39 @@
+# HOW TO USE
+# Give all ranks you want to have access to staffchat the permission 'sc.staffchat'
+
+options:
+  scprefix:&8[&4StaffChat&8]&7
+
+on join:
+  set {staffchat::%player's uuid%} to false
+
+command /staffchatinfo:
+  aliases: /scinfo, /sci
+  trigger:
+    message "&6&l(!) &fStaff Chat made by LesaDev."
+    message "&6&l(!) &fCurrent Version: &a1.0"
+    message "&6&l(!) &fFor quick staff chat messages you can use: &a/sc <message>"
+
+command /staffchat [<text>]:
+  aliases: /sc
+  permission: sc.staffchat
+  permission message: &6&l(!) &fYou need sc.staffchat permission to access Staff Chat!
+  trigger:
+    if arg-1 is set:
+      loop all players:
+        if loop-player has permission "sc.staffchat":
+          send "{@scprefix} &c%player's display name%&f: &f%arg-1%" to loop-players
+    else:
+      if {staffchat::%player's uuid%} is false:
+        set {staffchat::%player's uuid%} to true
+        send "{@scprefix} Staff chat enabled." to player
+      else:
+        set {staffchat::%player's uuid%} to false
+        send "{@scprefix} Staff chat disabled." to player
+
+on chat:
+  if {staffchat::%player's uuid%} is true:
+    cancel event
+    loop all players:
+      if loop-player has permission "sc.staffchat":
+        send "{@scprefix} &c%player's display name%&f: &f%message%" to loop-player

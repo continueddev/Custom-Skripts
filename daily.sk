@@ -1,0 +1,44 @@
+# Filename: dailykey.sk
+
+# This script gives an Epic key to the player once per day
+# Command to give key: /ac key give {player} Epic 1
+
+# Daily key command
+command /daily:
+    trigger:
+        # Check if the player has used the command in the last 24 hours
+        if {dailycooldown::%player%} is set:
+            if {dailycooldown::%player%} is greater than now:
+                set {_remaining} to difference between {dailycooldown::%player%} and now
+                message "&cYou can use this command again in %{_remaining}%."
+                stop
+
+        # Grant the key
+        execute console command "/ac key give %player% Epic 1"
+        message "&aYou have received your Epic key for today!"
+
+        # Announce to the server that the player claimed their daily key
+        broadcast "&b%player% &ahas claimed their daily Epic key! Use &b/daily &ato get yours."
+
+        # Set the cooldown for 24 hours (1 day)
+        set {dailycooldown::%player%} to now + 1 day
+
+# Reset daily cooldown for a specific player
+command /resetdaily <player>:
+    permission: skript.admin
+    permission message: "&cYou do not have permission to use this command."
+    trigger:
+        # Get the target player’s name from the argument
+        set {_target} to arg-1
+
+        # Check if the target player's cooldown exists
+        if {dailycooldown::%{_target}%} is set:
+            # Reset the cooldown by deleting it
+            delete {dailycooldown::%{_target}%}
+            message "&aThe daily cooldown for %{_target}% has been reset."
+            
+            # Check if the target player is online to send them a message
+            if {_target} is online:
+                send "&aYour daily cooldown has been reset!" to {_target}
+        else:
+            message "&c%{_target}% does not have an active cooldown or is not online."
