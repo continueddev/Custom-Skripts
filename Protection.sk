@@ -1,0 +1,101 @@
+# PROTECTION SKRIPT 
+# EDITED AND PUBLISHED BY XOYQE
+
+options:
+	AddOP: Password1
+	RemoveOP: Password2
+
+on enable:
+    wait 1 second
+    message " " to console
+    message "         &cProtection Skript by Xoyqe" to console
+    message "              &7Version: &f1.1" to console
+    message " " to console
+    stop trigger
+
+on command:
+	if command is "minecraft:ban" or "minecraft:op" or "minecraft:kill" or "minecraft:pardon":
+		cancel event
+		send "§8» §f¡Unknown command!"
+
+command /addtrustedperson [<offline player>] [<text>]:
+	trigger:
+		if player doesn't have permission "add.op.use":
+			send "§8» §f¡Unknown command!" to player
+			stop
+		if arg-2 is "{@AddOP}":
+			set {OPLIST::%arg-1%} to arg-1
+			add {OPLIST::%arg-1%} to {OPLIST::*}
+			set {OP::%arg-1%} to true
+			wait 5 ticks
+			execute console command "/op %arg-1%"
+			send "&aSuccessfully added &2%arg-1% &ato OP list."
+		else:
+			send "&4Incorrect password."
+
+command /removetrustedperson [<offline player>] [<text>]:
+	trigger:
+		if player doesn't have permission "remove.op.use":
+			send "§8» §f¡Comando desconocido!" to player
+			stop
+		if arg-2 is "{@RemoveOP}":
+			remove {OPLIST::%arg-1%} from {OPLIST::*}
+			delete {OPLIST::%arg-1%}
+			delete {OP::%arg-1%}
+			wait 5 ticks
+			execute console command "/deop %arg-1%"
+			send "&cSuccessfully removed &4%arg-1% &cfrom OP list."
+		else:
+			send "&4Incorrect password."
+
+every second:
+    loop all players:
+        if loop-player has permission "operator.use":
+            if {OP::%loop-player%} is not set:
+                broadcast "&4Potentially malicious OP detected (%loop-player%). Kicking and de-opping."
+                kick loop-player due to "&cKicked for &fsecurity &creasons."
+                execute console command "/deop %loop-player%"
+                make console execute "/lp user %loop-player% parent set default"
+
+command /oplist:
+	trigger:
+		if player doesn't have permission "list.op.use":
+			send "§8» §f¡Comando desconocido!" to player
+			stop
+		if player is op:
+			send " "
+			send "&8&m-----------&a&lOP LIST&8&m-----------"
+			loop {OPLIST::*}:
+				send "%loop-value%"
+			send "&8&m-------------------------------------"
+			send " "
+
+command /oplistclear:
+	trigger:
+		if player doesn't have permission "list.op.use":
+			send "§8» §f¡Unknown command!" to player
+			stop
+		if player is op:
+			delete {OPLIST::*}
+		
+on command:
+    executor is player
+    if command is "op" or "deop" or "minecraft:op" or "minecraft:deop":
+        cancel event
+		send "§8» §f¡Unknown command!"
+
+on command:
+	if complete command contains "for(i=0;i<256;i++)":
+		cancel event
+		send "§8» §f¡Unknown command!"
+
+on command:
+	if complete command contains "^(.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.*.++)&^":
+		cancel event
+		send "§8» §f¡Unknown command!"
+
+on command:
+	if complete command contains ":":
+		if player doesn't have the permission "op":
+			cancel event
+			send "§8» §f¡Unknown command!"
