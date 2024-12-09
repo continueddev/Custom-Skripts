@@ -1,0 +1,68 @@
+# Thank you for download Xoyqes Mention Script
+
+options:
+    prefix: <##4287f5>&lMENTIONS &7»&f
+    permission-mentions-command: mentions.command.use
+    mention-color: <##4287f5>
+
+# Do not change anything below if you aren't experienced with skript!
+
+on tab complete of "/mentions":
+    set tab completions for position 1 to "menu"
+
+on chat:
+    loop all players:
+        if message contains "%loop-value%":
+            replace all "%loop-value%" in message with "{@mention-color}@&o%loop-value%&f"
+            if {mentions-toggled-sounds::%player's uuid%} is true:
+                play sound "entity.player.levelup" to loop-player
+            if {mentions-toggled-messages::%player's uuid%} is true:
+                send action bar "&7You have been mentioned by {@mention-color}%loop-player%&7 in chat!" to loop-player
+
+command /mentions <text>:
+    permission: {@permission-mentions-command}
+    permission message: &cYou aren't allowed to execute this command!
+    usage: {@prefix} /mentions menu
+    trigger:
+        if arg is "menu":
+            set metadata tag "MentionsGUI" of player to chest inventory with 4 rows named "{@prefix} Mentions Menu"
+            set slot (numbers from 0 to 46) of metadata tag "MentionsGUI" of player to gray stained glass pane
+            set slot 11 of metadata tag "MentionsGUI" of player to book and quill named "<##4298f5>&lMention Messages" with lore "&7Click the button if you think you're a <##f5bc42>celebrity" and "&7and want to toggle mention messages &aon&7/&coff&7!"
+            if {mentions-toggled-messages::%player's uuid%} is true:
+                set slot 20 of metadata tag "MentionsGUI" of player to lime dye named "&a&lMention Messages" with lore "&aMention messages are toggled on!"
+            else:
+                set slot 20 of metadata tag "MentionsGUI" of player to grey dye named "&c&lMention Messages" with lore "&cMention messages are toggled off!"
+            set slot 13 of metadata tag "MentionsGUI" of player to Note block named "<##4298f5>&lMention Sounds" with lore "&7Click the button below if you think you're a <##f5bc42>celebrity" and "&7and want to toggle mention sounds &aon&7/&coff&7!"
+            if {mentions-toggled-sounds::%player's uuid%} is true:
+                set slot 22 of metadata tag "MentionsGUI" of player to lime dye named "&a&lMention Sounds" with lore "&aMention sounds are toggled on!"
+            else:
+                set slot 22 of metadata tag "MentionsGUI" of player to grey dye named "&c&lMention Sounds" with lore "&cMention sounds are toggled off!"
+            open (metadata tag "MentionsGUI" of player) to player
+
+on join:
+    if {mentions-toggled-sounds::%player's uuid%} is not set:
+        set {mentions-toggled-sounds::%player's uuid%} to true 
+    if {mentions-toggled-messages::%player's uuid%} is not set:
+        set {mentions-toggled-messages::%player's uuid%} to true
+
+on inventory click:
+    if name of event-inventory contains "{@prefix} Mentions Menu":
+        cancel event
+        if event-slot = 22:
+            if {mentions-toggled-sounds::%player's uuid%} is true:
+                set {mentions-toggled-sounds::%player's uuid%} to false
+                set slot 22 of metadata tag "MentionsGUI" of player to grey dye named "&c&lMention Sounds" with lore "&cMention sounds are now toggled off!"
+                play sound "entity.experience_orb.pickup" at pitch 1
+            else if {mentions-toggled-sounds::%player's uuid%} is false:
+                set {mentions-toggled-sounds::%player's uuid%} to true
+                play sound "entity.experience_orb.pickup" at pitch 0.5
+                set slot 22 of metadata tag "MentionsGUI" of player to lime dye named "&a&lMention Sounds" with lore "&aMention sounds are now toggled on!"
+        else if event-slot = 20:
+            if {mentions-toggled-messages::%player's uuid%} is true:
+                set {mentions-toggled-messages::%player's uuid%} to false
+                set slot 20 of metadata tag "MentionsGUI" of player to grey dye named "&c&lMention Messages" with lore "&cMention messages are now toggled off!"
+                play sound "entity.experience_orb.pickup" at pitch 1
+            else if {mentions-toggled-messages::%player's uuid%} is false:
+                set {mentions-toggled-messages::%player's uuid%} to true
+                play sound "entity.experience_orb.pickup" at pitch 0.5
+                set slot 20 of metadata tag "MentionsGUI" of player to lime dye named "&a&lMention Messages" with lore "&aMention messages are now toggled on!"
