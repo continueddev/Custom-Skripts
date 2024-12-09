@@ -1,0 +1,190 @@
+#Made by Xoyqe
+
+#----------------------------------------------------------------------------------
+#Do not redistribute unless given direct written permission from myself (Xoyqe)
+#----------------------------------------------------------------------------------
+
+# | Requires the following addon(s):
+# > skBee
+
+options:
+    p: <##9C2EF8>&lCHATGAMES &8‣ #Prefix for messages
+
+    color1: <##B660FF> 
+    color2: &f
+    color3: &7
+    color4: &8
+    color5: &c
+
+    interval: 2 minutes #How often chatgames happen
+    timetoanswer: 15 seconds #Time players have to answer a chatgame before it ends
+    leaderboardrefreshtime: 5 minutes #How often the personal best leaderboard refreshes
+    
+    perm: chatgames.use #The chatgames admin command permisson
+    noperm: &cYou do not have permission to do this
+
+    reward_cmd1: /give %{_p}% diamond 1 #Ensure where the player would be set is set as '%{_p}%'
+    reward_cmd2: /give %{_p}% diamond 2 #Ensure where the player would be set is set as '%{_p}%'
+    reward_cmd3: /give %{_p}% diamond 3 #Ensure where the player would be set is set as '%{_p}%'
+
+
+on load:
+    delete {-chatgames::words::*}
+
+    registerChatGamesWord("ExampleWord1")
+    registerChatGamesWord("ExampleWord2")
+    registerChatGamesWord("ExampleWord3")
+    #You can add as many words as you want by repeating the same format as shown above
+
+
+every {@interval}:
+    set {_r} to random integer between 1 and 2
+    chatGamesStart("basic") if {_r} is 1
+    chatGamesStart("unscramble") if {_r} is 2
+
+every {@leaderboardrefreshtime}:
+    chatGamesPBLeaderboardReload()
+
+function registerChatGamesWord(word: text):
+    add {_word} to {-chatgames::words::*}
+
+function chatGamesStart(type: text):
+    set {_word} to random element out of {-chatgames::words::*}
+    set {-chatgames::word::current} to {_word}
+    set {-chatgames::time::current} to now
+
+    {_type} = "basic":
+        broadcast ""
+        broadcast "{@color1}Type the word"
+        broadcast " {@color4}| {@color2}First to type the word gets a prize:"
+        broadcast " {@color4}| {@color2}Word: {@color1}%{_word}%"
+        broadcast ""
+
+    {_type} = "unscramble":
+        set {_s::*} to split {_word} at ""
+        set {_s::*} to shuffled {_s::*}
+        set {_word} to (join {_s::*} by "")
+
+        broadcast ""
+        broadcast "{@color1}Unscramble the word"
+        broadcast " {@color4}| {@color2}First to unscramble the word gets a prize:"
+        broadcast " {@color4}| {@color2}Word: {@color1}%{_word}%"
+        broadcast ""
+
+    wait 15 seconds
+    if {-chatgames::word::current} is set:
+        broadcast ""
+        broadcast " {@color4}| {@color2}Nobody got the answer in time!"
+        broadcast " {@color4}| {@color2}Answer: {@color1}%{-chatgames::word::current}%"
+        broadcast ""
+        delete {-chatgames::word::current}
+        delete {-chatgames::time::current}
+
+function chatGamesGetReward(p: player):
+    set {_reward} to random integer between 1 and 3
+    
+    execute console command "{@reward_cmd1}" if {_reward} is 1
+    execute console command "{@reward_cmd2}" if {_reward} is 2
+    execute console command "{@reward_cmd3}" if {_reward} is 3
+
+function chatGamesPrintHelp(p: player):
+    send "{@color4}&m--------&r {@p} {@color3}Help (Skript by skTank <3) {@color4}&m--------" to {_p}
+    send " {@color4}| {@color3}/chatgames force" to {_p}
+    send " {@color4}| {@color3}/chatgames help" to {_p}
+    send " {@color4}| {@color3}/chatgames resetpb (player/all)" to {_p}
+    send "{@color4}&m-------------------------------------" to {_p}
+
+
+command /chatgames [<text>] [<text>]:
+    aliases: /chatgame, /reactiongames, /reactiongame
+    permission: {@perm}
+    permission message: {@noperm}
+    trigger:
+        if arg-1 is not "help" or "force" or "list" or "resetpb":
+            chatGamesPrintHelp(player)
+
+        else if arg-1 is "help":
+            chatGamesPrintHelp(player)
+
+        else if arg-1 is "force":
+            set {_r} to random integer between 1 and 2
+            chatGamesStart("basic") if {_r} is 1
+            chatGamesStart("unscramble") if {_r} is 2
+
+        else if arg-1 is "resetpb":
+            if arg-2 is set:
+                if arg-2 isn't "all":
+                    set {_p} to arg-2 parsed as player
+                    chatGamesPBResetPlayer(player, {_p})
+
+                else if arg-2 is "all":
+                    chatGamesPBResetAll(player)                    
+
+
+on chat:
+    if {-chatgames::word::current} is set:
+        if message contains "%{-chatgames::word::current}%":
+
+            cancel event
+
+            if {-chatgames::pb::player::%player's uuid%} isn't set:
+                set {-chatgames::pb::player::%player's uuid%} to difference between now and {-chatgames::time::current}
+                chatGamesBroadcastWin(player)
+                stop
+
+            else if {-chatgames::pb::player::%player's uuid%} is set:
+                if difference between now and {-chatgames::time::current} < {-chatgames::pb::player::%player's uuid%}:
+                    set {_old} to {-chatgames::pb::player::%player's uuid%}
+
+                    wait 5 ticks
+
+                    set {-chatgames::pb::player::%player's uuid%} to difference between now and {-chatgames::time::current}
+                    set {_new} to {-chatgames::pb::player::%player's uuid%}
+
+                    chatGamesBroadcastWin(player)
+                    send "{@p} {@color2}You got a new {@color1}personal best {@color2}time!"
+                    send "{@p} {@color2}From {@color1}%{_old}% {@color2}to {@color1}%{_new}%"
+                    stop
+                    
+                else:
+                    chatGamesBroadcastWin(player)
+
+            
+function chatGamesBroadcastWin(p: player):
+    broadcast ""
+    broadcast " {@color4}| {@color1}%{_p}% {@color2}got it the fastest! {@color3}(%difference between now and {-chatgames::time::current}%)"
+    broadcast formatted " {@color4}| {@color2}Personal best: {@color1}%{-chatgames::pb::player::%{_p}'s uuid%}% <tooltip:{@p} &7PB Leaderboard%nl%%{-chatgames::pb::leaderboards::1} ? "N/A"%%nl%%{-chatgames::pb::leaderboards::2} ? "N/A"%%nl%%{-chatgames::pb::leaderboards::3} ? "N/A"%%nl%%{-chatgames::pb::leaderboards::4} ? "N/A"%%nl%%{-chatgames::pb::leaderboards::5} ? "N/A"%>{@color3}(Hover for PB Leaderboard)<reset>"
+    broadcast " {@color4}| {@color2}Answer: {@color1}%{-chatgames::word::current}%"
+    broadcast ""
+
+    delete {-chatgames::word::current}
+    delete {-chatgames::time::current}
+
+    chatGamesGetReward({_p})
+
+function chatGamesPBLeaderboardReload():
+    delete {-chatgames::pb::leaderboards::*}
+
+    loop all offline players:
+        set {_pb::lb::%loop-offlineplayer's uuid%} to {-chatgames::pb::player::%loop-offlineplayer's uuid%}
+    set {_top_pb::*} to sorted indexes of {_pb::lb::*} in ascending order
+    loop {_top_pb::*}:
+        add 1 to {_spot}
+        set {_player} to ("%loop-value%" parsed as offlineplayer)
+        set {_nobody} to "N/A"
+        set {-chatgames::pb::leaderboards::%{_spot}%} to "&7##%{_spot}% &f&n%{_player}%&r: {@color3}%{-chatgames::pb::player::%{_player}'s uuid%}%"
+        {_spot} = 5
+        stop loop
+
+function chatGamesPBResetAll(e: player):
+    delete {-chatgames::pb::player::*}
+    send "{@p} {@color2}Successfully reset {@color1}all {@color2}personal bests!" to {_e}
+
+function chatGamesPBResetPlayer(e: player, p: player):
+    set {_u} to {_p}'s uuid
+    delete {-chatgames::pb::player::%{_u}%}
+    send "{@p} {@color2}Successfully reset {@color1}%{_p}%'s {@color2}personal best!" to {_e}
+
+on tab complete:
+    event-string = "/chatgames" or "/chatgame" or "/reactiongames" or "/reactiongame"
+    set tab completion for position 1 to "force", "list" and "help"
