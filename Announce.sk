@@ -32,6 +32,3 @@ command /announce [<text>] [<text>]:
         else:
             send "{@prefix}<##fc0303>No situation provided"
 
-
-# Made by #zefyras0230 on Discord
-# Versions Tested: 3.9.1
